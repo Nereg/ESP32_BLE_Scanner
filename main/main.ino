@@ -21,18 +21,20 @@ BLEScan *pBLEScan;
 class MyAdvertisedDeviceCallbacks : public BLEAdvertisedDeviceCallbacks {
     void onResult(BLEAdvertisedDevice advertisedDevice) { // https://github.com/espressif/arduino-esp32/blob/762d1a0f690684c8bb1e87edc4bc77e4b6c0cb00/libraries/BLE/src/BLEAdvertisedDevice.h#L38
       if (advertisedDevice.haveName()) {
-        Serial.print("Device name: ");
-        Serial.println(advertisedDevice.getName().c_str());
-        Serial.println("");
+        Serial.print("name: ");
+        Serial.print(advertisedDevice.getName().c_str());
+        Serial.print(", ");
       }
 
       if (advertisedDevice.haveServiceUUID()) {
         BLEUUID devUUID = advertisedDevice.getServiceUUID();
-        Serial.print("Found ServiceUUID: ");
-        Serial.println(devUUID.toString().c_str());
-        Serial.println("");
+        Serial.print("ServiceUUID: ");
+        Serial.print(devUUID.toString().c_str());
+        Serial.print(", ");
       }
-
+      Serial.print("MAC ");
+      Serial.print(advertisedDevice.getAddress().toString().c_str());
+      Serial.print(", ");
       if (advertisedDevice.haveManufacturerData() == true) {
         String strManufacturerData = advertisedDevice.getManufacturerData();
 
@@ -49,12 +51,12 @@ class MyAdvertisedDeviceCallbacks : public BLEAdvertisedDeviceCallbacks {
             ENDIAN_CHANGE_U16(oBeacon.getMinor()), oBeacon.getProximityUUID().toString().c_str(), oBeacon.getSignalPower()
           );
         } else {
-          Serial.println("Found another manufacturers beacon!");
+//          Serial.print("Found another manufacturers beacon!");
           Serial.printf("strManufacturerData: %d ", strManufacturerData.length());
           for (int i = 0; i < strManufacturerData.length(); i++) {
             Serial.printf("[%X]", cManufacturerData[i]);
           }
-          Serial.printf("\n");
+          
         }
       }
 
@@ -70,7 +72,7 @@ class MyAdvertisedDeviceCallbacks : public BLEAdvertisedDeviceCallbacks {
         Serial.printf("Decoded URL: %s\n", EddystoneURL.getDecodedURL().c_str());
         Serial.printf("EddystoneURL.getDecodedURL(): %s\n", EddystoneURL.getDecodedURL().c_str());
         Serial.printf("TX power %d (Raw 0x%02X)\n", EddystoneURL.getPower(), EddystoneURL.getPower());
-        Serial.println("\n");
+//        Serial.println("\n");
       }
 
       if (advertisedDevice.getFrameType() == BLE_EDDYSTONE_TLM_FRAME) {
@@ -82,17 +84,17 @@ class MyAdvertisedDeviceCallbacks : public BLEAdvertisedDeviceCallbacks {
         Serial.printf("Reported time since last reboot: %lus\n", EddystoneTLM.getTime());
         Serial.println("\n");
         Serial.print(EddystoneTLM.toString().c_str());
-        Serial.println("\n");
+//        Serial.println("\n");
       }
+      Serial.printf("\n");
     }
 };
 
 void setup() {
   Serial.begin(115200);
-  Serial.println("Scanning...");
 
-  BLEDevice::init("");
-  pBLEScan = BLEDevice::getScan();  //create new scan
+  BLEDevice::init("BLEScanner");
+  pBLEScan = BLEDevice::getScan();  //create new scan https://github.com/espressif/arduino-esp32/blob/762d1a0f690684c8bb1e87edc4bc77e4b6c0cb00/libraries/BLE/src/BLEDevice.h#L34
   pBLEScan->setAdvertisedDeviceCallbacks(new MyAdvertisedDeviceCallbacks());
   pBLEScan->setActiveScan(true);  //active scan uses more power, but get results faster
   pBLEScan->setInterval(100);
@@ -106,6 +108,7 @@ void loop() {
     while (!Serial.findUntil("S", "\n"))
     {
     }
+    Serial.println("Scanning...");
     // put your main code here, to run repeatedly:
     BLEScanResults *foundDevices = pBLEScan->start(scanTime, false);
     Serial.print("Devices found: ");
